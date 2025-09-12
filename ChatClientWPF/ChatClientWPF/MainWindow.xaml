@@ -1,0 +1,19 @@
+﻿<Window x:Class="ChatClientWPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Chat Client" Height="400" Width="450">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ListBox x:Name="ChatBox" Grid.Row="0" Margin="0,0,0,10"/>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal">
+            <TextBox x:Name="MessageInput" Width="250" Margin="0,0,10,0"/>
+            <Button x:Name="EmojiBtn" Content="😊" Width="40" Click="EmojiBtn_Click"/>
+            <Button x:Name="SendBtn" Content="Send" Width="80" Click="SendBtn_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
