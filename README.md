@@ -22,9 +22,6 @@
 3. Server mặc định lắng nghe ở:  
 127.0.0.1:5000
 
-markdown
-Sao chép mã
-
 ---
 
 ### 3. Chạy client (WPF)
@@ -35,9 +32,6 @@ Sao chép mã
 - Nếu chạy trên **cùng máy**:
 IP: 127.0.0.1
 Port: 5000
-
-markdown
-Sao chép mã
 
 - Nếu chạy trên **2 máy trong LAN**:
 - Trên máy server, mở **Command Prompt** và gõ:
