@@ -1,10 +1,11 @@
 ﻿using System.Net.Sockets;
 using System.Text;
-using System.Windows;
+using System.Windows; // Ensure this namespace is included
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.IO;
 using Microsoft.Win32; // Add this at the top if not present
+using System.Collections.ObjectModel;
 
 namespace ChatClientWPF
 {
@@ -15,10 +16,12 @@ namespace ChatClientWPF
         TcpClient fileClient;
         NetworkStream fileStream;
         string userName;
+        public ObservableCollection<object> ChatItems { get; } = new ObservableCollection<object>();
 
         public MainWindow()
         {
             InitializeComponent();
+            DataContext = this;
 
             // Nhập tên người dùng
             userName = Microsoft.VisualBasic.Interaction.InputBox(
@@ -60,7 +63,7 @@ namespace ChatClientWPF
                     string header = ReadLine(chatStream, buffer);
                     if (header == null) break;
 
-                    Dispatcher.Invoke(() => ChatBox.Items.Add(header));
+                    Dispatcher.Invoke(() => ChatItems.Add(header));
                 }
             }
             catch { }
@@ -82,10 +85,17 @@ namespace ChatClientWPF
                     string filename = parts[2];
                     long filesize = long.Parse(parts[3]);
 
-                    Dispatcher.Invoke(() => ChatBox.Items.Add($"{sender} is sending file: {filename} ({filesize} bytes)"));
+                    var item = new FileTransferItem
+                    {
+                        Sender = sender,
+                        FileName = filename,
+                        TotalBytes = filesize,
+                        TempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + Path.GetExtension(filename)),
+                        IsImage = IsImageExtension(filename)
+                    };
+                    Dispatcher.Invoke(() => ChatItems.Add(item));
 
-                    string savePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), filename);
-                    using (var fs = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, FileOptions.SequentialScan))
+                    using (var fs = new FileStream(item.TempPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, FileOptions.SequentialScan))
                     {
                         long received = 0;
                         while (received < filesize)
@@ -95,9 +105,11 @@ namespace ChatClientWPF
                             if (read <= 0) break;
                             fs.Write(buffer, 0, read);
                             received += read;
+                            var r = received; var total = filesize;
+                            Dispatcher.Invoke(() => item.Progress = (int)(r * 100 / total));
                         }
                     }
-                    Dispatcher.Invoke(() => ChatBox.Items.Add($"Received file: {filename} (saved to Desktop)"));
+                    Dispatcher.Invoke(() => { item.IsCompleted = true; item.StatusText = "Received"; });
                 }
             }
             catch { }
@@ -128,7 +140,7 @@ namespace ChatClientWPF
             byte[] data = Encoding.UTF8.GetBytes(msg);
             chatStream.Write(data, 0, data.Length);
 
-            ChatBox.Items.Add("Me: " + MessageInput.Text);
+            ChatItems.Add("Me: " + MessageInput.Text);
             MessageInput.Clear();
         }
 
@@ -177,23 +189,75 @@ namespace ChatClientWPF
                 {
                     try
                     {
+                        var item = new FileTransferItem
+                        {
+                            Sender = userName,
+                            FileName = fileName,
+                            TotalBytes = fileSize,
+                            LocalPath = filePath,
+                            IsImage = IsImageExtension(fileName),
+                            StatusText = "Uploading"
+                        };
+                        Dispatcher.Invoke(() => ChatItems.Add(item));
+
                         fileStream.Write(headerBytes, 0, headerBytes.Length);
                         using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, FileOptions.SequentialScan))
                         {
                             byte[] buffer = new byte[8192];
                             int bytesRead;
+                            long sent = 0;
                             while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
                             {
                                 fileStream.Write(buffer, 0, bytesRead);
+                                sent += bytesRead;
+                                var s = sent; var total = fileSize;
+                                Dispatcher.Invoke(() => item.Progress = (int)(s * 100 / total));
                             }
                         }
-                        Dispatcher.Invoke(() => ChatBox.Items.Add($"Đã gửi file: {fileName} ({fileSize} bytes)"));
+                        Dispatcher.Invoke(() => { item.IsCompleted = true; item.StatusText = "Uploaded"; });
                     }
                     catch
                     {
-                        Dispatcher.Invoke(() => ChatBox.Items.Add($"Gửi file thất bại: {fileName}"));
+                        Dispatcher.Invoke(() => ChatItems.Add($"Gửi file thất bại: {fileName}"));
                     }
                 });
+            }
+        }
+
+        private bool IsImageExtension(string filename)
+        {
+            var ext = Path.GetExtension(filename).ToLowerInvariant();
+            return ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".gif" || ext == ".bmp" || ext == ".webp";
+        }
+
+        private void DownloadBtn_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is FileTransferItem item && item.IsCompleted)
+            {
+                var sfd = new SaveFileDialog();
+                sfd.FileName = item.FileName;
+                if (sfd.ShowDialog() == true)
+                {
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(item.TempPath) && File.Exists(item.TempPath))
+                        {
+                            File.Copy(item.TempPath, sfd.FileName, true);
+                        }
+                        else if (!string.IsNullOrEmpty(item.LocalPath) && File.Exists(item.LocalPath))
+                        {
+                            File.Copy(item.LocalPath, sfd.FileName, true);
+                        }
+                        else
+                        {
+                            MessageBox.Show("File không tồn tại tạm thời để lưu.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Lỗi lưu file: " + ex.Message);
+                    }
+                }
             }
         }
     }

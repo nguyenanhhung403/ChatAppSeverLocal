@@ -8,7 +8,50 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ListBox x:Name="ChatBox" Grid.Row="0" Margin="0,0,0,10"/>
+        <ListBox x:Name="ChatBox" Grid.Row="0" Margin="0,0,0,10" ItemsSource="{Binding ChatItems}">
+            <ListBox.Resources>
+                <!-- Text message template -->
+                <DataTemplate DataType="{x:Type sys:String}" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
+                </DataTemplate>
+
+                <!-- File transfer template -->
+                <DataTemplate DataType="{x:Type local:FileTransferItem}" xmlns:local="clr-namespace:ChatClientWPF">
+                    <Border Padding="6" Margin="0,0,0,6" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Image Width="60" Height="60" Margin="0,0,10,0" Grid.Column="0" Stretch="UniformToFill" Source="{Binding LocalPath}">
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsImage}" Value="True">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock FontWeight="Bold" Text="{Binding FileName}"/>
+                                <TextBlock FontStyle="Italic" Foreground="#666" Margin="0,2,0,4" Text="{Binding Sender}"/>
+                                <ProgressBar Height="8" Minimum="0" Maximum="100" Value="{Binding Progress}"/>
+                                <TextBlock Margin="0,4,0,0" Foreground="#666" FontSize="12" Text="{Binding StatusText}"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="2" Content="Download" Margin="10,0,0,0" Padding="10,4" Click="DownloadBtn_Click"
+                                    Tag="{Binding}" IsEnabled="{Binding IsCompleted}"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.Resources>
+        </ListBox>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal">
             <TextBox x:Name="MessageInput" Width="250" Margin="0,0,10,0"/>
