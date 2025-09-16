@@ -14,6 +14,7 @@
             <TextBox x:Name="MessageInput" Width="250" Margin="0,0,10,0"/>
             <Button x:Name="EmojiBtn" Content="😊" Width="40" Click="EmojiBtn_Click"/>
             <Button x:Name="SendBtn" Content="Send" Width="80" Click="SendBtn_Click"/>
+            <Button x:Name="SendFileBtn" Content="Send Image" Width="80" Click="SendFileBtn_Click" Margin="10,0,0,0"/>
         </StackPanel>
     </Grid>
 </Window>
