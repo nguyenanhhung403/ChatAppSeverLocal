@@ -2,6 +2,7 @@
 using System.Text;
 using System.Windows;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace ChatClientWPF
 {
@@ -30,7 +31,7 @@ namespace ChatClientWPF
             try
             {
                 // đổi IP này thành IP của máy chạy server
-                client = new TcpClient("192.168.1.14", 5000);
+                client = new TcpClient("10.87.29.108", 5000);
                 stream = client.GetStream();
 
                 Task.Run(() => ReceiveMessages());
@@ -68,11 +69,31 @@ namespace ChatClientWPF
             ChatBox.Items.Add("Me: " + MessageInput.Text);
             MessageInput.Clear();
         }
+
         private void EmojiBtn_Click(object sender, RoutedEventArgs e)
         {
-            MessageInput.Text += "😊";
-            MessageInput.Focus();
-            MessageInput.CaretIndex = MessageInput.Text.Length;
+            // Tạo menu emoji
+            ContextMenu menu = new ContextMenu();
+
+            string[] emojis = {
+                "😊", "👍", "❤️", "😂", "😢", "😡", "🎉", "🙏", "😎", "🥰", "🤔", "🙌", "🔥", "👏", "😆", "😴"
+            };
+
+            foreach (var em in emojis)
+            {
+                MenuItem item = new MenuItem { Header = em };
+                item.Click += (s, args) =>
+                {
+                    MessageInput.Text += em;
+                    MessageInput.Focus();
+                    MessageInput.CaretIndex = MessageInput.Text.Length;
+                };
+                menu.Items.Add(item);
+            }
+
+            // Hiển thị menu ngay chỗ nút
+            menu.PlacementTarget = EmojiBtn;
+            menu.IsOpen = true;
         }
     }
 }
