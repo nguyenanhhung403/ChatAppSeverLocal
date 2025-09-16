@@ -1,63 +1,217 @@
 ﻿<Window x:Class="ChatClientWPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Chat Client" Height="400" Width="450">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:local="clr-namespace:ChatClientWPF"
+        Title="Chat Client" Height="560" Width="520" WindowStartupLocation="CenterScreen"
+        Background="White" WindowStyle="SingleBorderWindow">
+    <Window.Resources>
+        <!-- Theme Colors -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#6750A4"/>
+        <SolidColorBrush x:Key="PrimaryBrushDark" Color="#4E3A93"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#00B0FF"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#111111"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#5F6368"/>
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="BorderBrushSoft" Color="#E5E7EB"/>
+        <LinearGradientBrush x:Key="WindowGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F5F7FF" Offset="0"/>
+            <GradientStop Color="#EEF2FF" Offset="1"/>
+        </LinearGradientBrush>
 
-        <ListBox x:Name="ChatBox" Grid.Row="0" Margin="0,0,0,10" ItemsSource="{Binding ChatItems}">
-            <ListBox.Resources>
-                <!-- Text message template -->
-                <DataTemplate DataType="{x:Type sys:String}" xmlns:sys="clr-namespace:System;assembly=mscorlib">
-                    <TextBlock Text="{Binding}" TextWrapping="Wrap"/>
-                </DataTemplate>
+        <!-- Button Style -->
+        <Style TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="MinWidth" Value="80"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource PrimaryBrushDark}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                <!-- File transfer template -->
-                <DataTemplate DataType="{x:Type local:FileTransferItem}" xmlns:local="clr-namespace:ChatClientWPF">
-                    <Border Padding="6" Margin="0,0,0,6" BorderBrush="#DDD" BorderThickness="1" CornerRadius="4">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+        <!-- Secondary Button Style -->
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#F3F4F6"/>
+            <Setter Property="Foreground" Value="#111"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#E5E7EB"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                            <Image Width="60" Height="60" Margin="0,0,10,0" Grid.Column="0" Stretch="UniformToFill" Source="{Binding LocalPath}">
-                                <Image.Style>
-                                    <Style TargetType="Image">
-                                        <Setter Property="Visibility" Value="Collapsed"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsImage}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Image.Style>
-                            </Image>
+        <!-- TextBox Style -->
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border" CornerRadius="8" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ScrollViewer x:Name="PART_ContentHost"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                <Setter TargetName="border" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-                            <StackPanel Grid.Column="1">
-                                <TextBlock FontWeight="Bold" Text="{Binding FileName}"/>
-                                <TextBlock FontStyle="Italic" Foreground="#666" Margin="0,2,0,4" Text="{Binding Sender}"/>
-                                <ProgressBar Height="8" Minimum="0" Maximum="100" Value="{Binding Progress}"/>
-                                <TextBlock Margin="0,4,0,0" Foreground="#666" FontSize="12" Text="{Binding StatusText}"/>
-                            </StackPanel>
+        <!-- ListBox Style -->
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        </Style>
 
-                            <Button Grid.Column="2" Content="Download" Margin="10,0,0,0" Padding="10,4" Click="DownloadBtn_Click"
-                                    Tag="{Binding}" IsEnabled="{Binding IsCompleted}"/>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </ListBox.Resources>
-        </ListBox>
+        <!-- ProgressBar Style -->
+        <Style TargetType="ProgressBar">
+            <Setter Property="Height" Value="8"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Border Background="#F1F5F9" CornerRadius="6">
+                            <Grid>
+                                <Rectangle Fill="{TemplateBinding Foreground}" RadiusX="6" RadiusY="6" Width="0">
+                                    <Rectangle.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded">
+                                            <BeginStoryboard>
+                                                <Storyboard RepeatBehavior="Forever" AutoReverse="False">
+                                                    <DoubleAnimation Storyboard.TargetProperty="Width" From="0" To="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ActualWidth}" Duration="0:0:0"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </Rectangle.Triggers>
+                                </Rectangle>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal">
-            <TextBox x:Name="MessageInput" Width="250" Margin="0,0,10,0"/>
-            <Button x:Name="EmojiBtn" Content="😊" Width="40" Click="EmojiBtn_Click"/>
-            <Button x:Name="SendBtn" Content="Send" Width="80" Click="SendBtn_Click"/>
-            <Button x:Name="SendFileBtn" Content="Send Image" Width="80" Click="SendFileBtn_Click" Margin="10,0,0,0"/>
-        </StackPanel>
+    <Grid Background="{StaticResource WindowGradient}">
+        <Border Margin="16" CornerRadius="16" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" SnapsToDevicePixels="True" >
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Background="{StaticResource PrimaryBrush}" CornerRadius="16,16,0,0" Padding="16">
+                    <DockPanel>
+                        <TextBlock Text="MyChat" Foreground="White" FontWeight="Bold" FontSize="18"/>
+                        <TextBlock DockPanel.Dock="Right" Foreground="#EDE7F6" Text="WPF"/>
+                    </DockPanel>
+                </Border>
+
+                <!-- Chat Area -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16">
+                    <ListBox x:Name="ChatBox" ItemsSource="{Binding ChatItems}">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="0,0,0,8"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.Resources>
+                            <!-- Text message template -->
+                            <DataTemplate DataType="{x:Type sys:String}">
+                                <Border Background="#F8FAFF" CornerRadius="8" Padding="10" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1">
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimary}"/>
+                                </Border>
+                            </DataTemplate>
+
+                            <!-- File transfer template -->
+                            <DataTemplate DataType="{x:Type local:FileTransferItem}">
+                                <Border Padding="10" Margin="0,0,0,0" Background="#FAFAFA" BorderBrush="{StaticResource BorderBrushSoft}" BorderThickness="1" CornerRadius="10">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Border Width="60" Height="60" CornerRadius="8" Background="#EEF2FF" Grid.Column="0" Margin="0,0,10,0">
+                                            <Image Stretch="UniformToFill" Source="{Binding LocalPath}">
+                                                <Image.Style>
+                                                    <Style TargetType="Image">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsImage}" Value="True">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Image.Style>
+                                            </Image>
+                                        </Border>
+
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock FontWeight="Bold" Text="{Binding FileName}" Foreground="{StaticResource TextPrimary}"/>
+                                            <TextBlock FontStyle="Italic" Foreground="{StaticResource TextSecondary}" Margin="0,2,0,6" Text="{Binding Sender}"/>
+                                            <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}"/>
+                                            <TextBlock Margin="0,6,0,0" Foreground="{StaticResource TextSecondary}" FontSize="12" Text="{Binding StatusText}"/>
+                                        </StackPanel>
+
+                                        <Button Grid.Column="2" Content="Download" Margin="12,0,0,0" Padding="12,6" Click="DownloadBtn_Click"
+                                                Tag="{Binding}" IsEnabled="{Binding IsCompleted}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.Resources>
+                    </ListBox>
+                </ScrollViewer>
+
+                <!-- Composer -->
+                <DockPanel Grid.Row="2" LastChildFill="True" Margin="16" >
+                    <Button x:Name="EmojiBtn" Content="😊" Width="44" Height="40" Style="{StaticResource SecondaryButton}" Click="EmojiBtn_Click" Margin="0,0,8,0"/>
+                    <TextBox x:Name="MessageInput" Height="40" Margin="0,0,8,0" Width="150"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="SendFileBtn" Content="Send FIle" Height="40" Click="SendFileBtn_Click" Margin="0,0,8,0"/>
+                        <Button x:Name="SendBtn" Content="Send" Height="40" Click="SendBtn_Click"/>
+                    </StackPanel>
+                </DockPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
